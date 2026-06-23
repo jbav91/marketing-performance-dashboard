@@ -1,3 +1,4 @@
 .env
 venv/
 .ipynb_checkpoints/
+gcp_key.json
