@@ -1,37 +1,37 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine
+from google.cloud import bigquery
 from dotenv import load_dotenv
 
-# 1. Cargar las credenciales seguras
-load_dotenv()
+# 1. Cargar las variables del archivo .env (subimos un nivel porque el script está en /scripts)
+load_dotenv('.env')
 
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-DB_NAME = os.getenv('DB_NAME')
+# 2. Inyectar la ruta exacta de la llave de Google Cloud
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json' 
 
-# 2. Conectarse a la Base de Datos
-conexion_url = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-engine = create_engine(conexion_url)
+# Inicializar el cliente oficial de BigQuery
+client = bigquery.Client()
 
 def ejecutar_auditoria_presupuesto():
-    print("🚀 Iniciando auditoría automática de campañas...\n")
+    print("🚀 Iniciando auditoría automática en Google BigQuery...\n")
     
-    # 3. Consultar la tabla correcta usando tus columnas exactas
+    # 3. Consultar la tabla directamente en la nube
+    # Fíjate que usamos tu proyecto real y tu tabla 'marketing_kpis'
     query = """
     SELECT 
         campaign_id, 
         SUM(mark_spent) as total_gasto, 
         SUM(revenue) as total_ingresos
-    FROM marketing_data 
+    FROM `mktng-performance-dashboard.data.marketing_kpis` 
     GROUP BY campaign_id;
     """
-    df = pd.read_sql(query, engine)
     
-    # Calcular el ROAS matemáticamente (Ingresos / Gasto)
-    df['roas_promedio'] = df['total_ingresos'] / df['total_gasto']
+    # Ejecutar la consulta en Google y descargarla como DataFrame
+    df = client.query(query).to_dataframe()
+    
+    # Calcular el ROAS global matemáticamente correcto (Ingresos / Gasto)
+    # Usamos fillna(0) para evitar errores si alguna campaña gastó pero generó 0 ingresos
+    df['roas_promedio'] = (df['total_ingresos'] / df['total_gasto']).fillna(0)
     
     # 4. Definir las REGLAS DE NEGOCIO para la alerta
     ROAS_LIMITE = 0.70
@@ -41,7 +41,7 @@ def ejecutar_auditoria_presupuesto():
     
     # 5. Procesar y disparar las alertas
     if not campanas_criticas.empty:
-        print(f"⚠️  ¡ALERTA CRÍTICA DETECTADA! Se encontraron {len(campanas_criticas)} campañas quemando presupuesto:\n")
+        print(f"⚠️ ¡ALERTA CRÍTICA DETECTADA! Se encontraron {len(campanas_criticas)} campañas quemando presupuesto:\n")
         print("-" * 65)
         
         for index, fila in campanas_criticas.iterrows():
@@ -58,7 +58,7 @@ def ejecutar_auditoria_presupuesto():
             print(mensaje_alerta)
             print("-" * 65)
             
-        print("\n[INFO] En producción, este script enviaría un mensaje automático a Slack.")
+        print("\n[INFO] En producción, este script enviaría un mensaje automático a Slack o Teams.")
         
     else:
         print("✅ Auditoría finalizada: Todas las campañas operan dentro de los rangos de ROAS saludables.")
