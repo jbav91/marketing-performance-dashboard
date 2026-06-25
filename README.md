@@ -24,7 +24,8 @@ The data flow follows a robust cloud-based ETL/ELT process:
 The final product is a corporate dashboard focused on the financial health of the campaigns and ad spend monitoring.
 
 *(Replace this line with a screenshot of your finished Dark Mode dashboard)*
-![Dashboard Preview](assets/dashboard_preview.png)
+![Dashboard Preview](<img width="1752" height="1020" alt="image" src="https://github.com/user-attachments/assets/58d7b84d-2dea-41cb-8bdc-b7dc1898ee63" />
+)
 
 ### 💡 Business Questions Answered
 * What is the global Return on Ad Spend (ROAS) and which active campaigns are operating below the profitability threshold?
